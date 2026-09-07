@@ -57,16 +57,19 @@ export async function getStaticPaths() {
 }
 
 export async function getStaticProps({ params }) {
-  return { props: { service: serviceData[params.slug] } }
+  const service = serviceData[params.slug]
+  return service ? { props: { service, slug: params.slug } } : { notFound: true }
 }
 
-export default function ServicePage({ service }) {
+export default function ServicePage({ service, slug }) {
+  const canonical = `https://www.amyelectric.com/services/${slug}`
+
   return (
     <>
       <Head>
         <title>{service.title} | Amy Electric</title>
         <meta name="description" content={service.description} />
-        <link href={`https://www.amyelectric.com/services/${encodeURIComponent(service.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''))}`} rel="canonical" />
+        <link href={canonical} rel="canonical" />
       </Head>
       <main className="page">
         <div className="container narrow">
