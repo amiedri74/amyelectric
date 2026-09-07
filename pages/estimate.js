@@ -32,6 +32,16 @@ export default function Estimate() {
         <title>EV Charger Installation Estimate | Amy Electric Los Angeles</title>
         <meta name="description" content="Use Amy Electric's EV charger installation estimator to understand project cost factors in Los Angeles. Final pricing requires a site evaluation." />
         <link rel="canonical" href="https://www.amyelectric.com/estimate" />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "Electrician",
+          "name": "AMY Electric",
+          "telephone": "+18183025614",
+          "email": "info@amyelectric.com",
+          "url": "https://www.amyelectric.com/estimate",
+          "address": { "@type": "PostalAddress", "streetAddress": "20628 Londelius St", "addressLocality": "Winnetka", "addressRegion": "CA", "postalCode": "91306" },
+          "priceRange": "$$"
+        }) }} />
       </Head>
       <main className="page">
         <div className="container narrow">

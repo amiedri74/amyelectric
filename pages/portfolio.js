@@ -16,6 +16,18 @@ export default function Portfolio() {
         <title>Project Portfolio | AMY Electric Los Angeles</title>
         <meta name="description" content="View AMY Electric\'s recent electrical projects across Greater Los Angeles — EV charger installations, panel upgrades, rewiring, and commercial work." />
         <link rel="canonical" href="https://www.amyelectric.com/portfolio" />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "Electrician",
+          "name": "AMY Electric",
+          "telephone": "+18183025614",
+          "url": "https://www.amyelectric.com/portfolio",
+          "address": { "@type": "PostalAddress", "streetAddress": "20628 Londelius St", "addressLocality": "Winnetka", "addressRegion": "CA", "postalCode": "91306" },
+          "hasOfferCatalog": {
+            "@type": "OfferCatalog",
+            "itemListElement": projects.map(p => ({ "@type": "Offer", "itemOffered": { "@type": "Service", "name": p.title } }))
+          }
+        }) }} />
       </Head>
       <main className="page">
         <div className="container">

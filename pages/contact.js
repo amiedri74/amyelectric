@@ -37,6 +37,16 @@ export default function Contact() {
         <title>Contact Amy Electric | Los Angeles Electrician</title>
         <meta name="description" content="Contact Amy Electric for electrical service, EV charger installation, panel upgrades, repairs and commercial electrical projects in Los Angeles." />
         <link rel="canonical" href="https://www.amyelectric.com/contact" />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "Electrician",
+          "name": "AMY Electric",
+          "telephone": "+18183025614",
+          "email": "info@amyelectric.com",
+          "url": "https://www.amyelectric.com/contact",
+          "address": { "@type": "PostalAddress", "streetAddress": "20628 Londelius St", "addressLocality": "Winnetka", "addressRegion": "CA", "postalCode": "91306" },
+          "sameAs": ["https://g.page/r/CVdK9ZAvNBrZEAI", "https://www.yelp.com/biz/amy-electric-winnetka"]
+        }) }} />
       </Head>
       <main className="page">
         <div className="container narrow">

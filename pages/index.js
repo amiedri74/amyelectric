@@ -22,13 +22,90 @@ export default function Home() {
         <meta name="robots" content="index,follow" />
         <link rel="canonical" href="https://www.amyelectric.com/" />
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
-          '@context': 'https://schema.org',
-          '@type': 'Electrician',
-          name: 'Amy Electric',
-          url: 'https://www.amyelectric.com/',
-          telephone: '+1-818-302-5614',
-          areaServed: 'Los Angeles, California',
-          serviceType: services.map(([name]) => name)
+          "@context": "https://schema.org",
+          "@type": "Electrician",
+          "name": "AMY Electric",
+          "image": "https://www.amyelectric.com/img/og-home.jpg",
+          "logo": "https://www.amyelectric.com/img/og-home.jpg",
+          "description": "Licensed C-10 electrical contractor in Los Angeles. EVITP-certified EV charger installation, panel upgrades, rewiring, and electrical repairs. Serving Greater LA since 2012.",
+          "telephone": "+18183025614",
+          "email": "info@amyelectric.com",
+          "url": "https://www.amyelectric.com/",
+          "address": {
+            "@type": "PostalAddress",
+            "streetAddress": "20628 Londelius St",
+            "addressLocality": "Winnetka",
+            "addressRegion": "CA",
+            "postalCode": "91306",
+            "addressCountry": "US"
+          },
+          "geo": {
+            "@type": "GeoCoordinates",
+            "latitude": 34.190,
+            "longitude": -118.587
+          },
+          "openingHoursSpecification": [
+            {
+              "@type": "OpeningHoursSpecification",
+              "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+              "opens": "07:00",
+              "closes": "17:00"
+            }
+          ],
+          "areaServed": {
+            "@type": "GeoCircle",
+            "geoMidpoint": { "@type": "GeoCoordinates", "latitude": 34.190, "longitude": -118.587 },
+            "geoRadius": 15000
+          },
+          "serviceArea": [
+            { "@type": "City", "name": "Los Angeles" },
+            { "@type": "City", "name": "Burbank" },
+            { "@type": "City", "name": "Glendale" },
+            { "@type": "City", "name": "Pasadena" },
+            { "@type": "City", "name": "Sherman Oaks" },
+            { "@type": "City", "name": "Studio City" },
+            { "@type": "City", "name": "North Hollywood" },
+            { "@type": "City", "name": "Van Nuys" },
+            { "@type": "City", "name": "Encino" },
+            { "@type": "City", "name": "Woodland Hills" },
+            { "@type": "City", "name": "Calabasas" },
+            { "@type": "City", "name": "Culver City" },
+            { "@type": "City", "name": "Beverly Hills" },
+            { "@type": "City", "name": "Santa Monica" },
+            { "@type": "City", "name": "West LA" },
+            { "@type": "City", "name": "Winnetka" }
+          ],
+          "aggregateRating": {
+            "@type": "AggregateRating",
+            "ratingValue": "4.9",
+            "reviewCount": "87",
+            "bestRating": "5",
+            "worstRating": "1"
+          },
+          "hasOfferCatalog": {
+            "@type": "OfferCatalog",
+            "name": "Electrical Services",
+            "itemListElement": [
+              { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "EV Charger Installation" } },
+              { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Panel Upgrade" } },
+              { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Electrical Repair" } },
+              { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Whole-Home Rewiring" } },
+              { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Surge Protection" } },
+              { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Generator Transfer Switch" } },
+              { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Lighting Installation" } }
+            ]
+          },
+          "sameAs": [
+            "https://g.page/r/CVdK9ZAvNBrZEAI",
+            "https://www.yelp.com/biz/amy-electric-winnetka",
+            "https://www.mapquest.com/us/california/amy-electric-365549572",
+            "https://www.buildzoom.com/contractor/a-m-y-electric",
+            "https://www.facebook.com/808165319279113"
+          ],
+          "priceRange": "$$",
+          "paymentAccepted": "Cash, Credit Card, Check",
+          "currenciesAccepted": "USD",
+          "containsInPlace": { "@type": "Place", "name": "Greater Los Angeles" }
         }) }} />
       </Head>
 
@@ -38,7 +115,7 @@ export default function Home() {
             <p className="eyebrow">Licensed C10 Electrical Contractor • EVITP Certified</p>
             <h1>Los Angeles Electrician & EV Charger Installation</h1>
             <p className="lead">Residential and commercial electrical services throughout Los Angeles and surrounding communities.</p>
-            <p className="credentials">C10 License #9871578 • EVITP #4051604</p>
+            <p className="credentials">C-10 License #981578 • EVITP #4051604</p>
             <div className="actions">
               <a className="button primary" href="tel:18183025614">Call (818) 302-5614</a>
               <Link className="button secondary" href="/services">View Electrical Services</Link>

@@ -15,6 +15,15 @@ export default function EVChargerCost() {
         <title>EV Charger Installation Cost in Los Angeles | Amy Electric</title>
         <meta name="description" content="Learn what affects EV charger installation cost in Los Angeles, including panel capacity, circuit size, wire distance, charger type and installation conditions." />
         <link rel="canonical" href="https://www.amyelectric.com/ev-charger-cost-los-angeles" />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          "mainEntity": faqs.map(([question, answer]) => ({
+            "@type": "Question",
+            "name": question,
+            "acceptedAnswer": { "@type": "Answer", "text": answer }
+          }))
+        }) }} />
       </Head>
       <main className="page">
         <div className="container narrow">

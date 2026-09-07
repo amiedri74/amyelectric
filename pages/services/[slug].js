@@ -70,6 +70,20 @@ export default function ServicePage({ service, slug }) {
         <title>{service.title} | Amy Electric</title>
         <meta name="description" content={service.description} />
         <link href={canonical} rel="canonical" />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "Service",
+          "serviceType": service.title.split('|')[0].trim().split(' in ')[0],
+          "provider": {
+            "@type": "Electrician",
+            "name": "AMY Electric",
+            "telephone": "+18183025614",
+            "address": { "@type": "PostalAddress", "streetAddress": "20628 Londelius St", "addressLocality": "Winnetka", "addressRegion": "CA", "postalCode": "91306" }
+          },
+          "areaServed": "Los Angeles, California",
+          "description": service.description,
+          "url": canonical
+        }) }} />
       </Head>
       <main className="page">
         <div className="container narrow">
