@@ -93,7 +93,7 @@ export default function About() {
               <p className="eyebrow">Our Story</p>
               <h2>Licensed C-10 Electrician Serving Los Angeles Since 2012</h2>
               <p>AMY Electric was founded in 2012 with a simple mission: provide honest, reliable, high-quality electrical service to Los Angeles homeowners and businesses. What started as a one-person operation has grown into a trusted team of licensed electricians serving 16+ communities across Greater Los Angeles.</p>
-              <p>Our founder, Amy, earned his California C-10 Electrical Contractor license (#981578) after years of hands-on experience in residential and commercial electrical work. He holds an EVITP certification for electric vehicle charging infrastructure and has completed 2,000+ projects across Greater LA.</p>
+              <p>Our founder, Amram, earned his California C-10 Electrical Contractor license (#981578) after years of hands-on experience in residential and commercial electrical work. He holds an EVITP certification for electric vehicle charging infrastructure and has completed 2,000+ projects across Greater LA.</p>
             </div>
             <div className="stats-grid">
               {stats.map((s) => (
