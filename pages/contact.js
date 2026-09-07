@@ -3,10 +3,32 @@ import { useState } from 'react'
 
 export default function Contact() {
   const [submitted, setSubmitted] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
 
-  function submit(event) {
+  async function submit(event) {
     event.preventDefault()
-    setSubmitted(true)
+    setLoading(true)
+    setError(null)
+    const form = event.target
+    const formData = new FormData(form)
+
+    try {
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        body: JSON.stringify(Object.fromEntries(formData)),
+        headers: { 'Content-Type': 'application/json' },
+      })
+      const data = await res.json()
+      if (data.success) {
+        setSubmitted(true)
+      } else {
+        setError(data.error || 'Something went wrong')
+      }
+    } catch (err) {
+      setError('Network error. Please call (818) 302-5614.')
+    }
+    setLoading(false)
   }
 
   return (
@@ -18,11 +40,11 @@ export default function Contact() {
       </Head>
       <main className="page">
         <div className="container narrow">
-          <p className="eyebrow">Amy Electric • C10 #9871578</p>
+          <p className="eyebrow">Amy Electric • C-10 #981578</p>
           <h1>Request an Electrical Estimate</h1>
           <p className="lead">Tell us about your project. For urgent questions, call (818) 302-5614.</p>
           {submitted ? (
-            <div className="estimate-box"><strong>Request received.</strong><p>For the fastest response, call (818) 302-5614.</p></div>
+            <div className="estimate-box"><strong>Request received.</strong><p>We will follow up within 24 hours. For the fastest response, call (818) 302-5614.</p></div>
           ) : (
             <form className="contact-form" onSubmit={submit}>
               <label>Name<input name="name" required /></label>
@@ -30,7 +52,10 @@ export default function Contact() {
               <label>Email<input name="email" type="email" /></label>
               <label>Project Type<select name="project"><option>EV Charger</option><option>Panel Upgrade</option><option>Electrical Repair</option><option>Lighting</option><option>Commercial Electrical</option><option>Other</option></select></label>
               <label>Project Details<textarea name="details" rows="6" required /></label>
-              <button className="button primary" type="submit">Request Estimate</button>
+              <button className="button primary" type="submit" disabled={loading}>
+                {loading ? 'Sending...' : 'Request Estimate'}
+              </button>
+              {error && <p style={{color:'red',marginTop:'8px'}}>{error}</p>}
             </form>
           )}
         </div>

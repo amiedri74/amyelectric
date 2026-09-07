@@ -16,6 +16,16 @@ export default function Estimate() {
     return { low: Math.round(low), high: Math.round(high) }
   }, [charger, distance, panel, location])
 
+  async function captureLead() {
+    try {
+      await fetch('/api/contact', {
+        method: 'POST',
+        body: JSON.stringify({ name: '', phone: '', project: `EV Charger — ${charger}`, details: `Preliminary estimate: $${estimate.low.toLocaleString()} – $${estimate.high.toLocaleString()}` }),
+        headers: { 'Content-Type': 'application/json' },
+      })
+    } catch {}
+  }
+
   return (
     <>
       <Head>
@@ -39,7 +49,10 @@ export default function Estimate() {
             <strong>${estimate.low.toLocaleString()} – ${estimate.high.toLocaleString()}</strong>
           </div>
           <p className="disclaimer">Actual pricing can change based on panel capacity, load calculation, circuit size, wire/conduit routing, equipment, permits and site conditions.</p>
-          <a className="button primary" href="tel:18183025614">Call (818) 302-5614 for an Evaluation</a>
+          <div style={{display:'flex',gap:'12px',flexWrap:'wrap'}}>
+            <a className="button primary" href="tel:18183025614">Call (818) 302-5614 for an Evaluation</a>
+            <button className="button secondary" onClick={captureLead}>Save My Estimate</button>
+          </div>
         </div>
       </main>
     </>
