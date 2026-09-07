@@ -112,7 +112,7 @@ export default function Home() {
       <main>
         <header className="hero">
           <div className="container">
-            <p className="eyebrow">Licensed C10 Electrical Contractor • EVITP Certified</p>
+            <p className="eyebrow">Licensed C-10 Electrical Contractor • EVITP Certified</p>
             <h1>Los Angeles Electrician & EV Charger Installation</h1>
             <p className="lead">Residential and commercial electrical services throughout Los Angeles and surrounding communities.</p>
             <p className="credentials">C-10 License #981578 • EVITP #4051604</p>

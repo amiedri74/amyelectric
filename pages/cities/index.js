@@ -29,7 +29,7 @@ export default function Cities() {
         <div className="container">
           <p className="eyebrow">Amy Electric</p>
           <h1>Los Angeles Electrical Service Areas</h1>
-          <p className="lead">Licensed C10 electrical contractor serving Los Angeles and surrounding communities.</p>
+          <p className="lead">Licensed C-10 electrical contractor serving Los Angeles and surrounding communities.</p>
           <div className="grid">
             {cities.map(([city, slug]) => (
               <Link className="card" key={slug} href={`/cities/${slug}`}>
