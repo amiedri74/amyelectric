@@ -1,6 +1,6 @@
 # AMY Electric — Next.js Website
 
-Website and lead-capture application for AMY Electric.
+Website and lead-capture application for AMY Electric, deployed on Cloudflare Workers.
 
 ## Getting Started
 
@@ -12,42 +12,41 @@ npm run dev
 ## FOSS lead-management architecture
 
 - EspoCRM is the selected self-hosted FOSS CRM (AGPLv3).
-- MariaDB stores EspoCRM's own CRM data.
-- PostgreSQL stores website leads and a durable delivery outbox.
-- The website API persists a valid lead before attempting CRM or email delivery.
-- The server-side EspoCRM API client uses an API key that must never be exposed to the browser.
-- A protected worker endpoint retries pending CRM/email deliveries.
+- MariaDB stores EspoCRM's CRM data.
+- PostgreSQL stores website leads and the durable delivery outbox on the office/home Linux computer.
+- The website runs on Cloudflare Workers using the OpenNext adapter.
+- The Worker validates website leads and securely forwards them through Cloudflare Tunnel + Access to the local lead API.
+- The local lead API persists leads and handles EspoCRM synchronization, email delivery, and retries.
+- Neither PostgreSQL nor MariaDB is publicly exposed.
 
-See docs/phase-2-foss-crm.md for deployment, secrets, scheduler setup and acceptance tests.
+See [Cloudflare Workers + office-hosted CRM deployment](docs/cloudflare-workers-office-crm.md) for setup, secrets, tunnel routes, deployment, and acceptance tests.
 
-## Environment
+## Cloudflare Workers commands
 
-Copy .env.example to .env.local for local website development and configure the required values. For server deployment, set secrets in the hosting platform's secret manager.
+- `npm run worker:build` — build the Next.js application for Workers.
+- `npm run worker:preview` — preview in the Workers runtime.
+- `npm run worker:deploy` — deploy using Wrangler.
+- `npm run cf-typegen` — generate Worker binding types.
 
-Required website runtime values:
-- DATABASE_URL and optional DATABASE_SSL
-- ESPOCRM_URL and ESPOCRM_API_KEY
-- LEAD_WORKER_TOKEN
-- SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, EMAIL_FROM, EMAIL_TO
-- NEXT_PUBLIC_GA_MEASUREMENT_ID for GA4
+Before deploying, set the Worker name in `wrangler.jsonc` to the exact existing script name from the Cloudflare dashboard. Use a staging Worker first.
 
 ## Pages
 
-- / — Homepage
-- /estimate — EV charger preliminary estimator
-- /contact — Residential lead capture
-- /commercial-bid — Commercial bid request
-- /portfolio — Project portfolio
-- /cities and /cities/[slug] — City landing pages
-- /services and /services/[slug] — Service pages
-- /ev-charger-cost-los-angeles — EV charger pricing and FAQs
-- /api/contact — Validates and durably records website leads
-- /api/internal/process-lead-outbox — Token-protected delivery retry worker
+- `/` — Homepage
+- `/estimate` — EV charger preliminary estimator
+- `/contact` — Residential lead capture
+- `/commercial-bid` — Commercial bid request
+- `/portfolio` — Project portfolio
+- `/cities` and `/cities/[slug]` — City landing pages
+- `/services` and `/services/[slug]` — Service pages
+- `/ev-charger-cost-los-angeles` — EV charger pricing and FAQs
+- `/api/contact` — Validates and forwards website leads to the private office lead API
+- `/api/internal/process-lead-outbox` — Token-protected retry worker proxy
 
 ## Database setup
 
-Apply db/schema.sql to the PostgreSQL application database before enabling live forms. EspoCRM must use its separate MariaDB service from docker-compose.crm.yml.
+Apply `db/schema.sql` to the local PostgreSQL lead database before enabling live forms. EspoCRM uses its separate MariaDB service from `docker-compose.crm.yml`.
 
 ## Deployment safety
 
-Do not deploy with sample secrets. Keep .env files out of Git. Use HTTPS, private database networking, backups and a pinned EspoCRM image version. Run staging acceptance tests in docs/phase-2-foss-crm.md before production.
+Do not deploy with sample secrets. Keep `.env` out of Git. Require Cloudflare Access on both the CRM and lead API hostnames, keep database ports private, use backups, and run staging acceptance tests before production.
