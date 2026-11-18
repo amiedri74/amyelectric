@@ -7,7 +7,7 @@ export const config = {
 }
 
 const MAX_FIELD_LENGTH = 5000
-const emailPattern = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
 function clean(value, max = MAX_FIELD_LENGTH) {
@@ -32,7 +32,7 @@ export default async function handler(req, res) {
   const project = clean(body.project, 150)
   const details = clean(body.details)
   const customerType = clean(body.customerType, 30) || 'residential'
-  const phoneDigits = phone.replace(/\\D/g, '')
+  const phoneDigits = phone.replace(/\D/g, '')
 
   if (name.length < 2 || phoneDigits.length < 10 || phoneDigits.length > 15) {
     return res.status(400).json({ success: false, error: 'Please provide a name and a valid phone number.' })
