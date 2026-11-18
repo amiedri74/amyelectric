@@ -1,6 +1,5 @@
 import { randomUUID } from 'crypto'
-import { saveLead } from '../../lib/db'
-import { processLead } from '../../lib/lead-outbox'
+import { postToLocalLeadApi } from '../../lib/cloudflare-lead-service'
 
 export const config = {
   api: { bodyParser: { sizeLimit: '1mb' } }
@@ -51,12 +50,7 @@ export default async function handler(req, res) {
   }
 
   const payload = {
-    customerType,
-    name,
-    firstName,
-    lastName,
-    phone,
-    email,
+    customerType, name, firstName, lastName, phone, email,
     company: clean(body.company, 200),
     role: clean(body.role, 100),
     project,
@@ -89,7 +83,7 @@ export default async function handler(req, res) {
   const idempotencyKey = typeof suppliedKey === 'string' && uuidPattern.test(suppliedKey) ? suppliedKey : randomUUID()
 
   try {
-    const saved = await saveLead({
+    const response = await postToLocalLeadApi('/api/leads', {
       idempotencyKey,
       customerType,
       name,
@@ -102,22 +96,18 @@ export default async function handler(req, res) {
       payload,
     })
 
-    let delivery = { espocrm: 'pending', email: 'pending' }
-    try {
-      delivery = await processLead(saved.id)
-    } catch (error) {
-      console.error('Lead delivery processing deferred:', error && error.message ? error.message : 'Unknown error')
+    if (!response.ok) {
+      console.error('Local lead service returned HTTP ' + response.status)
+      return res.status(503).json({
+        success: false,
+        error: 'We could not safely record your request. Please call (818) 302-5614.',
+      })
     }
 
-    return res.status(200).json({
-      success: true,
-      message: 'Lead safely recorded',
-      leadId: saved.id,
-      duplicate: saved.duplicate,
-      delivery,
-    })
+    const result = await response.json()
+    return res.status(200).json(result)
   } catch (error) {
-    console.error('Lead persistence failed:', error && error.message ? error.message : 'Unknown error')
+    console.error('Local lead service unavailable:', error?.message || 'Unknown error')
     return res.status(503).json({
       success: false,
       error: 'We could not safely record your request. Please call (818) 302-5614.',
