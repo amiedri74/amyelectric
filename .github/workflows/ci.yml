@@ -7,6 +7,7 @@ on:
       - main
       - feature/lead-generation-foundation
       - feature/espocrm-foss-crm
+      - feature/cloudflare-workers-local-crm
 
 jobs:
   build:
@@ -16,7 +17,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: npm
       - name: Install dependencies
         run: npm install
       - name: Build Next.js application
         run: npm run build
+      - name: Build Cloudflare Workers output
+        run: npm run worker:build
