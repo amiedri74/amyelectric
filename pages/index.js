@@ -30,7 +30,7 @@ export default function Home() {
           "email": "info@amyelectric.com",
           "url": "https://www.amyelectric.com/",
           "areaServed": { "@type": "AdministrativeArea", "name": "Greater Los Angeles, California" },
-          "hasOfferCatalog": { "@type": "OfferCatalog", "name": "Electrical Services", "itemListElement": services.map(([name]) => ({ "@type": "Offer", "itemOffered": { "@type": "Service", "name } })) },
+          "hasOfferCatalog": { "@type": "OfferCatalog", "name": "Electrical Services", "itemListElement": services.map(([name]) => ({ "@type": "Offer", "itemOffered": { "@type": "Service", "name": name } })) },
           "sameAs": ["https://g.page/r/CVdK9ZAvNBrZEAI", "https://www.yelp.com/biz/amy-electric-winnetka"]
         }) }} />
       </Head>
