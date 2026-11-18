@@ -1,24 +1,18 @@
-import nodemailer from 'nodemailer'
+import { randomUUID } from 'crypto'
+import { saveLead } from '../../lib/db'
+import { processLead } from '../../lib/lead-outbox'
 
 export const config = {
   api: { bodyParser: { sizeLimit: '1mb' } }
 }
 
 const MAX_FIELD_LENGTH = 5000
-const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const emailPattern = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/
+const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
 function clean(value, max = MAX_FIELD_LENGTH) {
   if (typeof value !== 'string') return ''
   return value.trim().slice(0, max)
-}
-
-function escapeHtml(value) {
-  return String(value)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;')
 }
 
 export default async function handler(req, res) {
@@ -28,7 +22,6 @@ export default async function handler(req, res) {
   }
 
   const body = req.body && typeof req.body === 'object' ? req.body : {}
-  // Honeypot: silently accept automated spam without sending it to the office.
   if (clean(body.website, 200)) return res.status(200).json({ success: true, message: 'Lead received' })
 
   const firstName = clean(body.firstName || body.name, 80)
@@ -39,7 +32,7 @@ export default async function handler(req, res) {
   const project = clean(body.project, 150)
   const details = clean(body.details)
   const customerType = clean(body.customerType, 30) || 'residential'
-  const phoneDigits = phone.replace(/\D/g, '')
+  const phoneDigits = phone.replace(/\\D/g, '')
 
   if (name.length < 2 || phoneDigits.length < 10 || phoneDigits.length > 15) {
     return res.status(400).json({ success: false, error: 'Please provide a name and a valid phone number.' })
@@ -57,64 +50,77 @@ export default async function handler(req, res) {
     return res.status(400).json({ success: false, error: 'Invalid customer type.' })
   }
 
-  const fields = {
-    'Customer type': customerType,
-    'Name': name,
-    'Phone': phone,
-    'Email': email || 'Not provided',
-    'Company': clean(body.company, 200),
-    'Contact role': clean(body.role, 100),
-    'Project type': project,
-    'Project name': clean(body.projectName, 200),
-    'Project address': clean(body.address, 250),
-    'City': clean(body.city, 100),
-    'State': clean(body.state, 50),
-    'ZIP code': clean(body.zipCode, 15),
-    'Project details': details,
-    'Preferred contact': clean(body.preferredContact, 50),
-    'Bid deadline': clean(body.bidDeadline, 80),
-    'Project start': clean(body.projectStart, 80),
-    'Service voltage': clean(body.serviceVoltage, 50),
-    'Service phase': clean(body.servicePhase, 50),
-    'Service amperage': clean(body.serviceAmperage, 50),
-    'Plans/files': clean(body.fileLinks, 1000),
-    'Landing page': clean(body.pageUrl, 500),
-    'Referrer': clean(body.referrer, 500),
-    'UTM source': clean(body.utm_source, 150),
-    'UTM medium': clean(body.utm_medium, 150),
-    'UTM campaign': clean(body.utm_campaign, 150),
-    'Google click ID': clean(body.gclid, 250),
+  const payload = {
+    customerType,
+    name,
+    firstName,
+    lastName,
+    phone,
+    email,
+    company: clean(body.company, 200),
+    role: clean(body.role, 100),
+    project,
+    projectName: clean(body.projectName, 200),
+    address: clean(body.address, 250),
+    city: clean(body.city, 100),
+    state: clean(body.state, 50),
+    zipCode: clean(body.zipCode, 15),
+    details,
+    preferredContact: clean(body.preferredContact, 50),
+    bidDeadline: clean(body.bidDeadline, 80),
+    projectStart: clean(body.projectStart, 80),
+    serviceVoltage: clean(body.serviceVoltage, 50),
+    servicePhase: clean(body.servicePhase, 50),
+    serviceAmperage: clean(body.serviceAmperage, 50),
+    fileLinks: clean(body.fileLinks, 1000),
+    pageUrl: clean(body.pageUrl, 500),
+    referrer: clean(body.referrer, 500),
+    utm_source: clean(body.utm_source, 150),
+    utm_medium: clean(body.utm_medium, 150),
+    utm_campaign: clean(body.utm_campaign, 150),
+    utm_term: clean(body.utm_term, 150),
+    utm_content: clean(body.utm_content, 150),
+    gclid: clean(body.gclid, 250),
+    contactConsent: 'yes',
+    consentCapturedAt: new Date().toISOString(),
   }
 
-  if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS || !process.env.EMAIL_TO) {
-    console.error('Lead delivery is not configured: required SMTP environment variables are missing.')
-    return res.status(503).json({ success: false, error: 'The request service is temporarily unavailable. Please call (818) 302-5614.' })
-  }
-
-  const rows = Object.entries(fields)
-    .filter(([, value]) => value)
-    .map(([label, value]) => '<tr><th align="left" style="padding:8px;border-bottom:1px solid #eee">' + escapeHtml(label) + '</th><td style="padding:8px;border-bottom:1px solid #eee;white-space:pre-wrap">' + escapeHtml(value) + '</td></tr>')
-    .join('')
-
-  const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: Number.parseInt(process.env.SMTP_PORT || '587', 10),
-    secure: Number.parseInt(process.env.SMTP_PORT || '587', 10) === 465,
-    auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
-  })
+  const suppliedKey = req.headers['idempotency-key']
+  const idempotencyKey = typeof suppliedKey === 'string' && uuidPattern.test(suppliedKey) ? suppliedKey : randomUUID()
 
   try {
-    await transporter.sendMail({
-      from: '"AMY Electric Website" <' + (process.env.EMAIL_FROM || process.env.SMTP_USER) + '>',
-      to: process.env.EMAIL_TO,
-      replyTo: email || undefined,
-      subject: 'New ' + (customerType === 'commercial' ? 'Commercial Bid' : 'Residential Lead') + ': ' + project,
-      html: '<h2>New AMY Electric Website Lead</h2><table cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;max-width:760px">' + rows + '</table>',
-      text: Object.entries(fields).filter(([, value]) => value).map(([label, value]) => label + ': ' + value).join('\n'),
+    const saved = await saveLead({
+      idempotencyKey,
+      customerType,
+      name,
+      phone,
+      email,
+      project,
+      address: payload.address,
+      zipCode: payload.zipCode,
+      pageUrl: payload.pageUrl,
+      payload,
     })
-    return res.status(200).json({ success: true, message: 'Lead received' })
+
+    let delivery = { espocrm: 'pending', email: 'pending' }
+    try {
+      delivery = await processLead(saved.id)
+    } catch (error) {
+      console.error('Lead delivery processing deferred:', error && error.message ? error.message : 'Unknown error')
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Lead safely recorded',
+      leadId: saved.id,
+      duplicate: saved.duplicate,
+      delivery,
+    })
   } catch (error) {
-    console.error('Lead email delivery failed:', error && error.message ? error.message : 'Unknown error')
-    return res.status(502).json({ success: false, error: 'We could not deliver your request. Please call (818) 302-5614.' })
+    console.error('Lead persistence failed:', error && error.message ? error.message : 'Unknown error')
+    return res.status(503).json({
+      success: false,
+      error: 'We could not safely record your request. Please call (818) 302-5614.',
+    })
   }
 }
