@@ -1,0 +1,24 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "amy-electric-worker",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-11-18",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "upload_source_maps": true,
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "services": [
+    {
+      "binding": "WORKER_SELF_REFERENCE",
+      "service": "amy-electric-worker"
+    }
+  ],
+  "vars": {
+    "LEAD_INGEST_URL": "https://leads-api.amyelectric.com"
+  },
+  "observability": {
+    "enabled": true
+  }
+}
