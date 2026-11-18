@@ -1,5 +1,6 @@
-# Put the CRM behind a TLS reverse proxy before public exposure.
 # Copy .env.example to .env and replace every CHANGE_ME value.
+# Only the lead API and EspoCRM are reachable through the private Docker network.
+# PostgreSQL and MariaDB are never published on a public interface.
 services:
   espocrm-db:
     image: mariadb:11.4
@@ -50,13 +51,6 @@ services:
       - espocrm_custom:/var/www/html/custom
       - espocrm_custom_client:/var/www/html/client/custom
 
-  cloudflared:
-    image: cloudflare/cloudflared:latest
-    restart: unless-stopped
-    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN:?Set CLOUDFLARE_TUNNEL_TOKEN}
-    depends_on:
-      - espocrm
-
   lead-db:
     image: postgres:16-alpine
     restart: unless-stopped
@@ -73,6 +67,43 @@ services:
       retries: 12
     ports:
       - "127.0.0.1:${LEADS_DB_LOCAL_PORT:-5433}:5432"
+
+  lead-api:
+    build:
+      context: .
+      dockerfile: Dockerfile.lead-api
+    restart: unless-stopped
+    depends_on:
+      lead-db:
+        condition: service_healthy
+      espocrm:
+        condition: service_started
+    environment:
+      NODE_ENV: production
+      LEAD_API_PORT: 3000
+      DATABASE_URL: postgresql://amy_leads:${LEADS_DB_PASSWORD:?Set LEADS_DB_PASSWORD}@lead-db:5432/amy_leads
+      DATABASE_SSL: "false"
+      DATABASE_POOL_MAX: 5
+      ESPOCRM_URL: http://espocrm:80
+      ESPOCRM_API_KEY: ${ESPOCRM_API_KEY:?Set ESPOCRM_API_KEY}
+      LEAD_INGEST_TOKEN: ${LEAD_INGEST_TOKEN:?Set LEAD_INGEST_TOKEN}
+      LEAD_WORKER_BATCH_SIZE: ${LEAD_WORKER_BATCH_SIZE:-25}
+      SMTP_HOST: ${SMTP_HOST:?Set SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:?Set SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS:?Set SMTP_PASS}
+      EMAIL_FROM: ${EMAIL_FROM:-noreply@amyelectric.com}
+      EMAIL_TO: ${EMAIL_TO:?Set EMAIL_TO}
+    expose:
+      - "3000"
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN:?Set CLOUDFLARE_TUNNEL_TOKEN}
+    depends_on:
+      - espocrm
+      - lead-api
 
 volumes:
   espocrm_db:
