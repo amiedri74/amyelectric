@@ -47,6 +47,9 @@ export default async function handler(req, res) {
   if (email && !emailPattern.test(email)) {
     return res.status(400).json({ success: false, error: 'Please provide a valid email address.' })
   }
+  if (body.contactConsent !== 'yes') {
+    return res.status(400).json({ success: false, error: 'Please confirm that Amy Electric may contact you about this project.' })
+  }
   if (!project || !details) {
     return res.status(400).json({ success: false, error: 'Please provide a project type and project details.' })
   }
@@ -60,6 +63,7 @@ export default async function handler(req, res) {
     'Phone': phone,
     'Email': email || 'Not provided',
     'Company': clean(body.company, 200),
+    'Contact role': clean(body.role, 100),
     'Project type': project,
     'Project name': clean(body.projectName, 200),
     'Project address': clean(body.address, 250),
