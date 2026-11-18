@@ -1,6 +1,6 @@
 # AMY Electric — Next.js Website
 
-Static marketing site for AMY Electric (C-10 #981578, EVITP #4051604).
+Website and lead-capture application for AMY Electric.
 
 ## Getting Started
 
@@ -9,26 +9,45 @@ npm install
 npm run dev
 ```
 
-## Environment Variables
+## FOSS lead-management architecture
 
-Copy `.env.example` to `.env.local` and configure:
+- EspoCRM is the selected self-hosted FOSS CRM (AGPLv3).
+- MariaDB stores EspoCRM's own CRM data.
+- PostgreSQL stores website leads and a durable delivery outbox.
+- The website API persists a valid lead before attempting CRM or email delivery.
+- The server-side EspoCRM API client uses an API key that must never be exposed to the browser.
+- A protected worker endpoint retries pending CRM/email deliveries.
 
-- `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS` — Email sending
-- `EMAIL_FROM`, `EMAIL_TO` — Email addresses
-- `NEXT_PUBLIC_GA_MEASUREMENT_ID` — Google Analytics 4
+See docs/phase-2-foss-crm.md for deployment, secrets, scheduler setup and acceptance tests.
+
+## Environment
+
+Copy .env.example to .env.local for local website development and configure the required values. For server deployment, set secrets in the hosting platform's secret manager.
+
+Required website runtime values:
+- DATABASE_URL and optional DATABASE_SSL
+- ESPOCRM_URL and ESPOCRM_API_KEY
+- LEAD_WORKER_TOKEN
+- SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, EMAIL_FROM, EMAIL_TO
+- NEXT_PUBLIC_GA_MEASUREMENT_ID for GA4
 
 ## Pages
 
-- `/` — Homepage
-- `/estimate` — EV Charger Installation Calculator
-- `/contact` — Lead capture form (submits to `/api/contact`)
-- `/portfolio` — Project portfolio
-- `/cities` and `/cities/[slug]` — City landing pages
-- `/services` and `/services/[slug]` — Service pages
-- `/ev-charger-cost-los-angeles` — EV charger pricing and FAQs
-- `/sitemap.xml` — Auto-generated sitemap
-- `/api/contact` — Form submission handler
+- / — Homepage
+- /estimate — EV charger preliminary estimator
+- /contact — Residential lead capture
+- /commercial-bid — Commercial bid request
+- /portfolio — Project portfolio
+- /cities and /cities/[slug] — City landing pages
+- /services and /services/[slug] — Service pages
+- /ev-charger-cost-los-angeles — EV charger pricing and FAQs
+- /api/contact — Validates and durably records website leads
+- /api/internal/process-lead-outbox — Token-protected delivery retry worker
 
-## Lead Pipeline
+## Database setup
 
-The contact and estimate forms submit to `/api/contact`, which sends an email via SMTP. Configure SMTP credentials in `.env.local` to enable email notifications.
+Apply db/schema.sql to the PostgreSQL application database before enabling live forms. EspoCRM must use its separate MariaDB service from docker-compose.crm.yml.
+
+## Deployment safety
+
+Do not deploy with sample secrets. Keep .env files out of Git. Use HTTPS, private database networking, backups and a pinned EspoCRM image version. Run staging acceptance tests in docs/phase-2-foss-crm.md before production.

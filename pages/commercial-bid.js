@@ -29,7 +29,7 @@ export default function CommercialBid() {
     try {
       const response = await fetch('/api/contact', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Idempotency-Key': window.crypto.randomUUID() },
         body: JSON.stringify(values),
       })
       const data = await response.json()

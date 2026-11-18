@@ -1,0 +1,82 @@
+# Put the CRM behind a TLS reverse proxy before public exposure.
+# Copy .env.example to .env and replace every CHANGE_ME value.
+services:
+  espocrm-db:
+    image: mariadb:11.4
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_PASSWORD: ${ESPOCRM_DB_ROOT_PASSWORD:?Set ESPOCRM_DB_ROOT_PASSWORD}
+      MARIADB_DATABASE: espocrm
+      MARIADB_USER: espocrm
+      MARIADB_PASSWORD: ${ESPOCRM_DB_PASSWORD:?Set ESPOCRM_DB_PASSWORD}
+    volumes:
+      - espocrm_db:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  espocrm:
+    image: espocrm/espocrm:${ESPOCRM_VERSION:-latest}
+    restart: unless-stopped
+    depends_on:
+      espocrm-db:
+        condition: service_healthy
+    environment:
+      ESPOCRM_DATABASE_PLATFORM: Mysql
+      ESPOCRM_DATABASE_HOST: espocrm-db
+      ESPOCRM_DATABASE_NAME: espocrm
+      ESPOCRM_DATABASE_USER: espocrm
+      ESPOCRM_DATABASE_PASSWORD: ${ESPOCRM_DB_PASSWORD:?Set ESPOCRM_DB_PASSWORD}
+      ESPOCRM_ADMIN_USERNAME: ${ESPOCRM_ADMIN_USERNAME:?Set ESPOCRM_ADMIN_USERNAME}
+      ESPOCRM_ADMIN_PASSWORD: ${ESPOCRM_ADMIN_PASSWORD:?Set ESPOCRM_ADMIN_PASSWORD}
+      ESPOCRM_SITE_URL: ${ESPOCRM_SITE_URL:?Set ESPOCRM_SITE_URL}
+    volumes:
+      - espocrm_data:/var/www/html/data
+      - espocrm_custom:/var/www/html/custom
+      - espocrm_custom_client:/var/www/html/client/custom
+    ports:
+      - "127.0.0.1:${ESPOCRM_LOCAL_PORT:-8088}:80"
+
+  espocrm-daemon:
+    image: espocrm/espocrm:${ESPOCRM_VERSION:-latest}
+    restart: unless-stopped
+    depends_on:
+      - espocrm
+    entrypoint: ["docker-daemon.sh"]
+    volumes:
+      - espocrm_data:/var/www/html/data
+      - espocrm_custom:/var/www/html/custom
+      - espocrm_custom_client:/var/www/html/client/custom
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN:?Set CLOUDFLARE_TUNNEL_TOKEN}
+    depends_on:
+      - espocrm
+
+  lead-db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: amy_leads
+      POSTGRES_USER: amy_leads
+      POSTGRES_PASSWORD: ${LEADS_DB_PASSWORD:?Set LEADS_DB_PASSWORD}
+    volumes:
+      - lead_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U amy_leads -d amy_leads"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    ports:
+      - "127.0.0.1:${LEADS_DB_LOCAL_PORT:-5433}:5432"
+
+volumes:
+  espocrm_db:
+  espocrm_data:
+  espocrm_custom:
+  espocrm_custom_client:
+  lead_db_data:
