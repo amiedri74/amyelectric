@@ -43,7 +43,7 @@ The API returns HTTP 503 if SMTP delivery is not configured. This is intentional
 These are separate follow-on phases and must not be represented as live functionality yet:
 
 - PostgreSQL lead persistence and durable submissions.
-- HubSpot contact/deal synchronization and retry queue.
+- EspoCRM contact/lead/opportunity synchronization and retry queue (self-hosted AGPLv3).
 - Secure file upload for commercial plans.
 - Authentication and internal CRM dashboard.
 - Material/labor estimating engine and NEC calculation modules.
