@@ -10,7 +10,7 @@ This design keeps the public Next.js website on Cloudflare Workers and runs Espo
 4. The local `lead-api` container stores the lead in PostgreSQL, then attempts EspoCRM and email delivery.
 5. PostgreSQL's outbox records delivery state and retries failures through the protected `/api/internal/process-lead-outbox` endpoint.
 
-PostgreSQL and MariaDB are not exposed to the internet. The lead API is reachable only through the Cloudflare Tunnel and Cloudflare Access.
+PostgreSQL and MariaDB are not exposed to the internet. The lead API is reachable only through the Cloudflare Tunnel and Cloudflare Access. This HTTP ingestion design is intentional: the Worker does not connect directly to a residential database port, and SMTP/CRM processing remains on the local Node.js service.
 
 ## Important framework compatibility
 
@@ -47,6 +47,7 @@ chmod 600 .env
 Replace every `CHANGE_ME` value with a unique strong secret. Set:
 - `LEADS_DB_PASSWORD`
 - `LEAD_INGEST_TOKEN` — at least 32 random bytes; this same value will be stored as a Cloudflare Worker secret
+- `LEAD_WORKER_TOKEN` — a separate random token shared with the Worker secret and the trusted scheduler
 - `ESPOCRM_API_KEY` — API key for a restricted EspoCRM integration user
 - MariaDB root, database, and EspoCRM admin passwords
 - SMTP host, port, username, password, and destination address
@@ -95,7 +96,7 @@ docker compose -f docker-compose.crm.yml restart cloudflared
 
 ## 4. Set Worker secrets
 
-Create a separate Cloudflare Access Service Token for the website Worker backend. Do not reuse the CRM user's interactive login.
+Create a Cloudflare Access Service Token for the website Worker backend. Do not reuse the CRM user's interactive login.
 
 From the repository root, authenticate Wrangler to the correct Cloudflare account and set the following Worker secrets:
 
@@ -110,13 +111,23 @@ npx wrangler secret put LEAD_WORKER_TOKEN
 When prompted:
 - `LEAD_INGEST_TOKEN`: enter the exact same value as `LEAD_INGEST_TOKEN` in the Linux server's `.env`.
 - `CF_ACCESS_CLIENT_ID` and `CF_ACCESS_CLIENT_SECRET`: enter the Cloudflare Access Service Token credentials for the `leads-api.amyelectric.com` Service Auth policy.
-- `LEAD_WORKER_TOKEN`: create a different random secret. It protects the public retry endpoint from unauthorized callers.
+- `LEAD_WORKER_TOKEN`: enter the same value as `LEAD_WORKER_TOKEN` in the Linux server's `.env`. The trusted scheduler uses it to call the Worker retry endpoint.
 
 `LEAD_INGEST_URL` is a non-secret Worker variable already set in `wrangler.jsonc`. Change it there if the hostname changes.
 
 For Workers Builds, configure the same runtime secrets in the Cloudflare dashboard's Worker settings. Never add any of these values to `NEXT_PUBLIC_*`, GitHub source, or browser code.
 
-## 5. Deploy to staging first
+## 5. Schedule outbox retries
+
+The outbox retry endpoint must be called regularly by a trusted scheduler. Configure a cron job or external scheduler to send a POST request once per minute to:
+
+```text
+https://www.amyelectric.com/api/internal/process-lead-outbox
+```
+
+Include the header `Authorization: Bearer <LEAD_WORKER_TOKEN>`. Store the token in the scheduler's secret store or a root-readable environment file; never put it in website JavaScript. The Worker then forwards the request through the Access-protected Tunnel to the local service.
+
+## 6. Deploy to staging first
 
 Run locally:
 
@@ -129,7 +140,7 @@ npm run worker:preview
 
 After the build succeeds, deploy a staging Worker (or use a separate staging environment) and configure its secrets. Do not move the production website route until the staging tests pass.
 
-## 6. Acceptance tests
+## 7. Acceptance tests
 
 - A valid residential form submission returns success and creates exactly one PostgreSQL lead.
 - A valid commercial bid request returns success and creates exactly one PostgreSQL lead.
@@ -143,7 +154,7 @@ After the build succeeds, deploy a staging Worker (or use a separate staging env
 - `crm.amyelectric.com` requires the owner's Access identity and MFA.
 - Restore both PostgreSQL and MariaDB from tested backups.
 
-## 7. Operating requirements
+## 8. Operating requirements
 
 - The Linux computer must remain powered on, online, and patched.
 - Use a UPS and reliable internet connection where practical.
