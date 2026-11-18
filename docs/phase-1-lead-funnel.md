@@ -7,7 +7,7 @@
 - Changed the EV estimate calculator so it only submits a lead after the visitor enters contact details and gives contact consent. The former empty-name/empty-phone submission was removed.
 - Added a shared GA4 event helper and lead/phone/quote events.
 - Hardened `/api/contact` with server-side field limits, phone/email validation, consent validation, a honeypot field, HTML escaping and safe text email output.
-- Kept SMTP delivery as the current lead-delivery mechanism.
+- Phase 1 originally used SMTP-only delivery. The Phase 2 branch extends this with PostgreSQL persistence, an outbox, and EspoCRM synchronization.
 - Corrected the Nodemailer dependency to a valid 6.x release line.
 
 ## Required production environment
@@ -24,7 +24,7 @@ Configure these values in the hosting provider's secret/environment settings:
 
 Do not commit real credentials to Git.
 
-The API returns HTTP 503 if SMTP delivery is not configured. This is intentional: it must not report a lead as successfully delivered when the mail transport is unavailable.
+On the Phase 2 branch, a valid lead is considered received once PostgreSQL commits it. CRM/email delivery can remain pending and is retried by the protected outbox worker.
 
 ## Manual staging acceptance tests
 
@@ -42,8 +42,7 @@ The API returns HTTP 503 if SMTP delivery is not configured. This is intentional
 
 These are separate follow-on phases and must not be represented as live functionality yet:
 
-- PostgreSQL lead persistence and durable submissions.
-- EspoCRM contact/lead/opportunity synchronization and retry queue (self-hosted AGPLv3).
+- Production PostgreSQL and EspoCRM deployment, credentials, TLS, backups and scheduler configuration.
 - Secure file upload for commercial plans.
 - Authentication and internal CRM dashboard.
 - Material/labor estimating engine and NEC calculation modules.
@@ -56,5 +55,5 @@ These are separate follow-on phases and must not be represented as live function
 Do not merge or deploy until:
 - Staging environment variables are configured.
 - All manual acceptance tests pass.
-- The build and lint commands pass in CI.
+- The Next.js build passes in CI; complete linting and the manual staging tests before production.
 - The owner confirms the production lead inbox and GA4 measurement ID.
