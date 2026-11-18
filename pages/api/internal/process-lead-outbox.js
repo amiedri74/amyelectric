@@ -1,5 +1,5 @@
 import { timingSafeEqual } from 'crypto'
-import { processPendingLeads } from '../../../lib/lead-outbox'
+import { getRuntimeEnv, postToLocalLeadApi } from '../../../lib/cloudflare-lead-service'
 
 export const config = {
   api: { bodyParser: false },
@@ -17,14 +17,18 @@ export default async function handler(req, res) {
     res.setHeader('Allow', 'POST')
     return res.status(405).json({ success: false, error: 'Method not allowed' })
   }
-  if (!isAuthorized(req.headers.authorization, process.env.LEAD_WORKER_TOKEN)) {
+
+  const env = getRuntimeEnv()
+  if (!isAuthorized(req.headers.authorization, env.LEAD_WORKER_TOKEN)) {
     return res.status(401).json({ success: false, error: 'Unauthorized' })
   }
+
   try {
-    const results = await processPendingLeads(Number.parseInt(process.env.LEAD_WORKER_BATCH_SIZE || '25', 10))
-    return res.status(200).json({ success: true, processed: results.length, results })
+    const response = await postToLocalLeadApi('/api/process-pending', {})
+    const result = await response.json().catch(() => ({}))
+    return res.status(response.ok ? 200 : 503).json(result)
   } catch (error) {
-    console.error('Lead outbox worker failed:', error && error.message ? error.message : 'Unknown error')
-    return res.status(503).json({ success: false, error: 'Worker temporarily unavailable' })
+    console.error('Local lead worker unavailable:', error?.message || 'Unknown error')
+    return res.status(503).json({ success: false, error: 'Lead service temporarily unavailable' })
   }
 }

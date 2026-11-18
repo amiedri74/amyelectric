@@ -2,17 +2,26 @@
   "name": "amyelectric",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "worker:build": "opennextjs-cloudflare build",
+    "worker:preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
+    "worker:deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
+    "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts"
   },
   "dependencies": {
-    "next": "14.2.5",
+    "next": "15.5.29",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "nodemailer": "^6.9.16",
-    "pg": "^8.13.1"
+    "pg": "^8.16.3"
+  },
+  "devDependencies": {
+    "@opennextjs/cloudflare": "1.20.17",
+    "wrangler": "4.164.0"
   }
 }
